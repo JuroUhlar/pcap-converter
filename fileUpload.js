@@ -28,6 +28,10 @@ app.listen(port, () =>
     console.log(`App is listening on port ${port}.`)
 );
 
+app.get('/', (req, res) => {
+    res.send('Hello World! The pcap converter should be running')
+  })
+
 
 app.post('/upload-pcap', async (req, res) => {
     try {
