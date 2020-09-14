@@ -1,3 +1,28 @@
 uploads
 csv
 datasets
+
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+
+package-lock.json
+
+# testing
+coverage
+
+# production
+build
+dist
+
+# misc
+.DS_Store
+.env
+npm-debug.log
+
+.idea/*
+!.idea/codeStyleSettings.xml
+!.idea/codeStyles
+!.idea/libraries
+!.idea/inspectionProfiles

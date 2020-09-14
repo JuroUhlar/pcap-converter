@@ -4,9 +4,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const _ = require('lodash');
-const { exec, execSync } = require("child_process");
+const { exec } = require("child_process");
 const fs = require('fs');
-const { pcapCSVToDatasetJson } = require('../parse')
+const { pcapCSVToDatasetJson } = require('./parse')
 
 const app = express();
 

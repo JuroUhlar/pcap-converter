@@ -1,0 +1,31 @@
+{
+  "name": "pcap-vis",
+  "version": "1.0.0",
+  "description": "A web based visualization of Pcap files",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./index.js",
+    "dev-start": "nodemon ./index.js",
+    "deploy": "gcloud app deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.ics.muni.cz:nc3/tractor/pcap-vis.git"
+  },
+  "author": "Juraj Uhlar",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^4.8.8",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.2.0",
+    "http-server": "^0.12.1",
+    "lodash": "^4.17.20",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
