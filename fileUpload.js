@@ -30,7 +30,7 @@ app.listen(port, () =>
 
 app.get('/', (req, res) => {
     res.send('Hello World! The pcap converter should be running')
-  })
+})
 
 
 app.post('/upload-pcap', async (req, res) => {
@@ -40,46 +40,55 @@ app.post('/upload-pcap', async (req, res) => {
                 status: false,
                 message: 'No file uploaded'
             });
-        } else {
-            //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
-            let pcap = req.files.pcap;
-
-            //Use the mv() method to place the file in upload directory (i.e. "uploads")
-            pcap.mv('./uploads/' + pcap.name);
-
-            let name = pcap.name.split('.')[0];
-            let inputFile = `./uploads/${pcap.name}`;
-            let outputCSVFile = `./csv/${name}.csv`;
-            let tshark = `tshark -r ${inputFile} -T fields -E separator=, -E header=y -E occurrence=f -e frame.number -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4 -e frame.time_epoch -e frame.protocols -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > ${outputCSVFile}`
-
-            console.log(tshark);
-
-            exec(tshark, (error, stdout, stderr) => {
-                if (error) {
-                    console.log(`error: ${error.message}`);
-                    return;
-                }
-                if (stderr) {
-                    console.log(`stderr: ${stderr}`);
-                    return;
-                }
-                pcapCSVToDatasetJson(outputCSVFile, `./datasets/${name}.json`);
-
-                var datasetFile = fs.readFileSync(`./datasets/${name}.json`);
-                let packets = JSON.parse(datasetFile);
-                //send response
-                res.send({
-                    status: true,
-                    message: 'File is uploaded',
-                    data: {
-                        name: pcap.name,
-                        mimetype: pcap.mimetype,
-                        size: pcap.size,
-                        extractedDataset: packets.slice(0,20)
-                    }
-                });
-            });
+            return;
         }
+        let pcap = req.files.pcap;
+        console.log('\n\n' + pcap.name);
+        let t0 = new Date();
+        
+        //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+        
+        //Use the mv() method to place the file in upload directory (i.e. "uploads")
+        pcap.mv('./uploads/' + pcap.name);
+        
+        let name = pcap.name.split('.')[0];
+        let inputFile = `./uploads/${pcap.name}`;
+        let outputCSVFile = `./csv/${name}.csv`;
+        let tshark = `tshark -r ${inputFile} -T fields -E separator=, -E header=y -E occurrence=f -e frame.number -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4 -e frame.time_epoch -e frame.protocols -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > ${outputCSVFile}`
+        
+        console.log(tshark);
+
+        exec(tshark, (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(`stderr: ${stderr}`);
+                return;
+            }
+            let t1 = new Date();
+            console.log('Parsed by Tshark in: %dms', t1 - t0);
+
+            pcapCSVToDatasetJson(outputCSVFile, `./datasets/${name}.json`);
+            var datasetFile = fs.readFileSync(`./datasets/${name}.json`);
+            let packets = JSON.parse(datasetFile);
+            //send response
+            res.send({
+                status: true,
+                message: 'File is uploaded',
+                data: {
+                    name: pcap.name,
+                    mimetype: pcap.mimetype,
+                    size: pcap.size,
+                    extractedDataset: packets.slice(0, 20)
+                }
+            });
+
+            let t2 = new Date();
+            console.log('Converted to dataset in: %dms', t2 - t1);
+
+        });
     } catch (err) {
         res.status(500).send(err);
     }

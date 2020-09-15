@@ -96,7 +96,7 @@ function parsedCsvToDataset(data) {
 
 
 function parse_pcap_csvFile(path) {
-    console.log(path);
+    // console.log(path);
     const fs = require('fs');
     const parse = require('csv-parse/lib/sync')
 
