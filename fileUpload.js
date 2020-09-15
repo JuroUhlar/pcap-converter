@@ -81,7 +81,7 @@ app.post('/upload-pcap', async (req, res) => {
                     name: pcap.name,
                     mimetype: pcap.mimetype,
                     size: pcap.size,
-                    extractedDataset: packets.slice(0, 20)
+                    extractedDataset: packets.slice(0, 200)
                 }
             });
 
