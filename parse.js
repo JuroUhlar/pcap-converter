@@ -1,4 +1,5 @@
 const fs = require('fs');
+var tools = require('./portAppData');
 
 // let pcapFiles = fs.readdirSync("./pcap");
 // console.log("Pcap files found: ", pcapFiles);
@@ -58,35 +59,36 @@ function parsedCsvToDataset(data) {
             destinationIp = packet["ipv6.dst"]
         }
 
-        let sourcePort = ''
-        let destinationPort = ''
+        let sourcePort = 0
+        let destinationPort = 0
 
         if (transportProtocol == 'tcp') {
-            sourcePort = packet["tcp.srcport"]
-            destinationPort = packet["tcp.dstport"]
+            sourcePort = +packet["tcp.srcport"]
+            destinationPort = +packet["tcp.dstport"]
         }
         if (transportProtocol == 'udp') {
-            sourcePort = packet["udp.srcport"]
-            destinationPort = packet["udp.dstport"]
+            sourcePort = +packet["udp.srcport"]
+            destinationPort = +packet["udp.dstport"]
         }
         if (transportProtocol == 'icmp') {
             if (protocols[5] == 'udp') {
-                sourcePort = packet["udp.srcport"]
-                destinationPort = packet["udp.dstport"]
+                sourcePort = +packet["udp.srcport"]
+                destinationPort = +packet["udp.dstport"]
             }
         }
 
         let extractedPacket = {
-            index: packet['frame.number'],
-            timestamp: packet["frame.time_epoch"],
+            index: +packet['frame.number'],
+            timestamp: +packet["frame.time_epoch"],
             networkProtocol: networkProtocol,
             transportProtocol: transportProtocol,
             applicationProtocol: applicationProtocol,
             sourceIp: sourceIp,
             destinationIp: destinationIp,
-            sourcePort: sourcePort,
-            destinationPort: destinationPort,
-            bytes: packet["frame.len"]
+            sourcePort: +sourcePort,
+            destinationPort: +destinationPort,
+            bytes: +packet["frame.len"],
+            app: getApp(+sourcePort, +destinationPort) ? getApp(+sourcePort, +destinationPort) : undefined,
         }
 
         dataset.push(extractedPacket)
@@ -94,6 +96,21 @@ function parsedCsvToDataset(data) {
     return dataset;
 }
 
+const getApp = (sourcePort, destinationPort) => {
+    let sourceApp = tools.getPortService(sourcePort);
+    let destinationApp = tools.getPortService(destinationPort);
+    // console.log(sourceApp, destinationApp);
+    if (sourceApp && !destinationApp) return sourceApp;
+    if (!sourceApp && destinationApp) return destinationApp;
+    if (sourceApp && destinationApp && sourceApp === destinationApp) return sourceApp;
+    if (sourceApp && destinationApp) {
+        // console.log('conflict', sourceApp, destinationApp);
+        if (sourcePort < destinationPort) return sourceApp;
+        else return destinationApp;
+    };
+    // console.log('null', sourcePort, destinationPort);
+    return null;
+}
 
 function parse_pcap_csvFile(path) {
     // console.log(path);
