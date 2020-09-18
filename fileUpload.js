@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const _ = require('lodash');
 const { exec } = require("child_process");
 const fs = require('fs');
+const fsExtra = require('fs-extra')
 const { pcapCSVToDatasetJson } = require('./parse')
 
 const app = express();
@@ -45,17 +46,17 @@ app.post('/upload-pcap', async (req, res) => {
         let pcap = req.files.pcap;
         console.log('\n\n' + pcap.name);
         let t0 = new Date();
-        
+
         //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
-        
+
         //Use the mv() method to place the file in upload directory (i.e. "uploads")
         pcap.mv('./uploads/' + pcap.name);
-        
+
         let name = pcap.name.split('.')[0];
         let inputFile = `./uploads/${pcap.name}`;
         let outputCSVFile = `./csv/${name}.csv`;
         let tshark = `tshark -r ${inputFile} -T fields -E separator=, -E header=y -E occurrence=f -e frame.number -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4 -e frame.time_epoch -e frame.protocols -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > ${outputCSVFile}`
-        
+
         console.log(tshark);
 
         exec(tshark, (error, stdout, stderr) => {
@@ -106,12 +107,14 @@ app.post('/convert-progressive', async (req, res) => {
         let pcap = req.files.pcap;
         let name = pcap.name.split('.')[0];
         console.log('\n\n' + pcap.name);
-  
-        
+
+
         //Use the mv() method to place the file in upload directory (i.e. "uploads")
         pcap.mv(`./progressive/${name}/` + pcap.name);
-        if(!fs.existsSync(`./progressive/${name}/sliced`)) {
+        if (!fs.existsSync(`./progressive/${name}/sliced`)) {
             fs.mkdirSync(`./progressive/${name}/sliced`);
+        } else {
+            fsExtra.emptyDirSync(`./progressive/${name}/sliced`);
         }
         let sliceCommnad = `windump -r ./progressive/${name}/${pcap.name} -w ./progressive/${name}/sliced/${name} -C 1`;
         console.log(sliceCommnad);
@@ -121,12 +124,16 @@ app.post('/convert-progressive', async (req, res) => {
                 console.log(`error: ${error.message}`);
                 return;
             }
-            if (stderr) {
-                console.log(`${stderr}`);
-                return;
-            }
-            console.log(stdout);
+            if (stderr) console.log(`${stderr}`);
+            if (stdout) console.log(stdout);
 
+            const files = fs.readdirSync(`./progressive/${name}/sliced`);
+            console.log(files);
+            files.forEach(file => fs.rename(
+                `./progressive/${name}/sliced/${file}`,
+                `./progressive/${name}/sliced/${file}.pcap`,
+                err => console.log(err)
+            ));
         });
 
         res.send({
@@ -139,11 +146,11 @@ app.post('/convert-progressive', async (req, res) => {
                 extractedDataset: []
             }
         });
-        
 
 
 
-   
+
+
     } catch (err) {
         res.status(500).send(err);
     }
