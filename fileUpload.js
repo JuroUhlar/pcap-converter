@@ -116,6 +116,19 @@ app.post('/convert-progressive', async (req, res) => {
         let sliceCommnad = `windump -r ./progressive/${name}/${pcap.name} -w ./progressive/${name}/sliced/${name} -C 1`;
         console.log(sliceCommnad);
 
+        exec(sliceCommnad, (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(`${stderr}`);
+                return;
+            }
+            console.log(stdout);
+
+        });
+
         res.send({
             status: true,
             message: 'File is uploaded',
