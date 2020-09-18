@@ -93,3 +93,45 @@ app.post('/upload-pcap', async (req, res) => {
         res.status(500).send(err);
     }
 });
+
+app.post('/convert-progressive', async (req, res) => {
+    try {
+        if (!req.files) {
+            res.send({
+                status: false,
+                message: 'No file uploaded'
+            });
+            return;
+        }
+        let pcap = req.files.pcap;
+        let name = pcap.name.split('.')[0];
+        console.log('\n\n' + pcap.name);
+  
+        
+        //Use the mv() method to place the file in upload directory (i.e. "uploads")
+        pcap.mv(`./progressive/${name}/` + pcap.name);
+        if(!fs.existsSync(`./progressive/${name}/sliced`)) {
+            fs.mkdirSync(`./progressive/${name}/sliced`);
+        }
+        let sliceCommnad = `windump -r ./progressive/${name}/${pcap.name} -w ./progressive/${name}/sliced/${name} -C 1`;
+        console.log(sliceCommnad);
+
+        res.send({
+            status: true,
+            message: 'File is uploaded',
+            data: {
+                name: pcap.name,
+                mimetype: pcap.mimetype,
+                size: pcap.size,
+                extractedDataset: []
+            }
+        });
+        
+
+
+
+   
+    } catch (err) {
+        res.status(500).send(err);
+    }
+});
