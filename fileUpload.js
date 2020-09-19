@@ -129,7 +129,11 @@ app.post('/convert-progressive', async (req, res) => {
             if (stdout) console.log(stdout);
 
             const files = fs.readdirSync(slicedFolder);
-            console.log(files);
+            // console.log(files);
+            // files.forEach(file => {
+            //     console.log(file);
+            // });
+            convertPcapsRecursively(files, 0, slicedFolder);
         });
 
         res.send({
@@ -146,3 +150,33 @@ app.post('/convert-progressive', async (req, res) => {
         res.status(500).send(err);
     }
 });
+
+
+function convertPcapsRecursively(pcaps, index, folder) {
+    if (index >= pcaps.length) return;
+    let pcap = pcaps[index];
+    console.log('\n' + pcap);
+
+    let name = pcap.split('.')[0];
+    let inputFile = `${folder}/${pcap}`;
+    let outputCSVFile = `${folder}/${name}.csv`;
+    let tshark = tsharkCommand(inputFile, outputCSVFile);
+    console.log(tshark);
+    exec(tshark, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log('Parsed by Tshark.');
+        convertPcapsRecursively(pcaps, index + 1, folder);
+    });
+
+}
+
+function tsharkCommand(inputFile, outputCSVFile) {
+    return `tshark -r ${inputFile} -T fields -E separator=, -E header=y -E occurrence=f -e frame.number -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4 -e frame.time_epoch -e frame.protocols -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > ${outputCSVFile}`;
+}
