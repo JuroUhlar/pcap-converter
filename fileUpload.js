@@ -176,7 +176,10 @@ function convertPcapsRecursively(pcaps, index, folder, res) {
                     extractedDataset: packets.slice(0, 10000)
                 }
             });
-        }
+        };
+
+        deleteFile(inputFilePath);
+        deleteFile(outputCSVFilePath);
         convertPcapsRecursively(pcaps, index + 1, folder);
 
 
@@ -184,6 +187,15 @@ function convertPcapsRecursively(pcaps, index, folder, res) {
 
 }
 
-function tsharkCommand(inputFile, outputCSVFile) {
-    return `tshark -r ${inputFile} -T fields -E separator=, -E header=y -E occurrence=f -e frame.number -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4 -e frame.time_epoch -e frame.protocols -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > ${outputCSVFile}`;
+function tsharkCommand(inputFilePath, outputCSVFile) {
+    return `tshark -r ${inputFilePath} -T fields -E separator=, -E header=y -E occurrence=f -e frame.number -e ip.src -e ip.dst -e ipv6.src -e ipv6.dst -e arp.src.proto_ipv4 -e arp.dst.proto_ipv4 -e frame.time_epoch -e frame.protocols -e udp.srcport -e udp.dstport -e tcp.srcport -e tcp.dstport -e frame.len > ${outputCSVFile}`;
+}
+
+function deleteFile(path) {
+    fs.unlink(path, (err) => {
+        if (err) {
+          console.error(err)
+          return
+        };
+      })
 }
