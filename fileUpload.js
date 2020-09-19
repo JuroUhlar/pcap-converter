@@ -158,9 +158,10 @@ function convertPcapsRecursively(pcaps, index, folder) {
     console.log('\n' + pcap);
 
     let name = pcap.split('.')[0];
-    let inputFile = `${folder}/${pcap}`;
-    let outputCSVFile = `${folder}/${name}.csv`;
-    let tshark = tsharkCommand(inputFile, outputCSVFile);
+    let inputFilePath = `${folder}/${pcap}`;
+    let outputCSVFilePath = `${folder}/${name}.csv`;
+    let outputJSONFilePath = `${folder}/${name}.json`;
+    let tshark = tsharkCommand(inputFilePath, outputCSVFilePath);
     console.log(tshark);
     exec(tshark, (error, stdout, stderr) => {
         if (error) {
@@ -172,6 +173,11 @@ function convertPcapsRecursively(pcaps, index, folder) {
             return;
         }
         console.log('Parsed by Tshark.');
+        pcapCSVToDatasetJson(outputCSVFilePath, outputJSONFilePath);
+        // var datasetFile = fs.readFileSync(outputJSONFilePath);
+        // let packets = JSON.parse(datasetFile);
+
+
         convertPcapsRecursively(pcaps, index + 1, folder);
     });
 
