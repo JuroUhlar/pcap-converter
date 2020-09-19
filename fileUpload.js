@@ -107,14 +107,15 @@ app.post('/convert-progressive', async (req, res) => {
         let pcap = req.files.pcap;
         let name = pcap.name.split('.')[0];
         console.log('\n\n' + pcap.name);
+        const slicedFolder = `./progressive/${name}/sliced`;
 
 
         //Use the mv() method to place the file in upload directory (i.e. "uploads")
         pcap.mv(`./progressive/${name}/` + pcap.name);
-        if (!fs.existsSync(`./progressive/${name}/sliced`)) {
-            fs.mkdirSync(`./progressive/${name}/sliced`);
+        if (!fs.existsSync(slicedFolder)) {
+            fs.mkdirSync(slicedFolder);
         } else {
-            fsExtra.emptyDirSync(`./progressive/${name}/sliced`);
+            fsExtra.emptyDirSync(slicedFolder);
         }
         let sliceCommnad = `windump -r ./progressive/${name}/${pcap.name} -w ./progressive/${name}/sliced/${name} -C 1`;
         console.log(sliceCommnad);
@@ -127,13 +128,8 @@ app.post('/convert-progressive', async (req, res) => {
             if (stderr) console.log(`${stderr}`);
             if (stdout) console.log(stdout);
 
-            const files = fs.readdirSync(`./progressive/${name}/sliced`);
+            const files = fs.readdirSync(slicedFolder);
             console.log(files);
-            files.forEach(file => fs.rename(
-                `./progressive/${name}/sliced/${file}`,
-                `./progressive/${name}/sliced/${file}.pcap`,
-                err => console.log(err)
-            ));
         });
 
         res.send({
