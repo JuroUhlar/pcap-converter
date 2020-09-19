@@ -117,7 +117,7 @@ app.post('/convert-progressive', async (req, res) => {
         } else {
             fsExtra.emptyDirSync(slicedFolder);
         }
-        let sliceCommnad = `windump -r ./progressive/${name}/${pcap.name} -w ./progressive/${name}/sliced/${name} -C 1`;
+        let sliceCommnad = `editcap -c 3000 ./progressive/${name}/${pcap.name} ./progressive/${name}/sliced/${pcap.name} `;
         console.log(sliceCommnad);
 
         exec(sliceCommnad, (error, stdout, stderr) => {
@@ -142,11 +142,6 @@ app.post('/convert-progressive', async (req, res) => {
                 extractedDataset: []
             }
         });
-
-
-
-
-
     } catch (err) {
         res.status(500).send(err);
     }
