@@ -117,7 +117,7 @@ app.post('/convert-progressive', async (req, res) => {
         } else {
             fsExtra.emptyDirSync(slicedFolder);
         }
-        let sliceCommnad = `editcap -c 3000 ./progressive/${name}/${pcap.name} ./progressive/${name}/sliced/${pcap.name} `;
+        let sliceCommnad = `editcap -c 10000 ./progressive/${name}/${pcap.name} ./progressive/${name}/sliced/${pcap.name} `;
         console.log(sliceCommnad);
 
         exec(sliceCommnad, (error, stdout, stderr) => {
@@ -129,22 +129,8 @@ app.post('/convert-progressive', async (req, res) => {
             if (stdout) console.log(stdout);
 
             const files = fs.readdirSync(slicedFolder);
-            // console.log(files);
-            // files.forEach(file => {
-            //     console.log(file);
-            // });
-            convertPcapsRecursively(files, 0, slicedFolder);
-        });
+            convertPcapsRecursively(files, 0, slicedFolder, res);
 
-        res.send({
-            status: true,
-            message: 'File is uploaded',
-            data: {
-                name: pcap.name,
-                mimetype: pcap.mimetype,
-                size: pcap.size,
-                extractedDataset: []
-            }
         });
     } catch (err) {
         res.status(500).send(err);
@@ -152,8 +138,11 @@ app.post('/convert-progressive', async (req, res) => {
 });
 
 
-function convertPcapsRecursively(pcaps, index, folder) {
-    if (index >= pcaps.length) return;
+function convertPcapsRecursively(pcaps, index, folder, res) {
+    if (index >= pcaps.length) {
+        console.log('All done');
+        return;
+    }
     let pcap = pcaps[index];
     console.log('\n' + pcap);
 
@@ -174,11 +163,23 @@ function convertPcapsRecursively(pcaps, index, folder) {
         }
         console.log('Parsed by Tshark.');
         pcapCSVToDatasetJson(outputCSVFilePath, outputJSONFilePath);
-        // var datasetFile = fs.readFileSync(outputJSONFilePath);
-        // let packets = JSON.parse(datasetFile);
-
-
+        
+        if(index === 0) {
+            console.log("Sending packets back");
+            var datasetFile = fs.readFileSync(outputJSONFilePath);
+            let packets = JSON.parse(datasetFile);
+            res.send({
+                status: true,
+                message: 'File is uploaded',
+                data: {
+                    name: pcap,
+                    extractedDataset: packets.slice(0, 10000)
+                }
+            });
+        }
         convertPcapsRecursively(pcaps, index + 1, folder);
+
+
     });
 
 }
