@@ -3,6 +3,7 @@ const fileUpload = require('express-fileupload');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const compression = require('compression');
 const _ = require('lodash');
 const { exec } = require("child_process");
 const fs = require('fs');
@@ -21,6 +22,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+app.use(compression());
 
 //start app 
 const port = process.env.PORT || 5000;
