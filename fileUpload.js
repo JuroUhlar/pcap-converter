@@ -4,20 +4,17 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const compression = require('compression');
-const _ = require('lodash');
 const { exec } = require("child_process");
 const fs = require('fs');
-const fsExtra = require('fs-extra')
-const { pcapCSVToDatasetJson } = require('./parse')
+const fsExtra = require('fs-extra');
+const { pcapCSVToDatasetJson } = require('./parse');
+const socketIO = require('socket.io');
 
 const app = express();
 
-// enable files upload
 app.use(fileUpload({
     createParentPath: true
 }));
-
-//add other middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -26,10 +23,24 @@ app.use(compression());
 
 //start app 
 const port = process.env.PORT || 5000;
-
-app.listen(port, () =>
+var server = app.listen(port, () =>
     console.log(`App is listening on port ${port}.`)
 );
+
+
+// Sockets
+var io = socketIO(server);
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+});
+
+
+
+
+
+
+
 
 app.get('/', (req, res) => {
     res.send('Hello World! The pcap converter should be running')
@@ -165,8 +176,8 @@ function convertPcapsRecursively(pcaps, index, folder, res) {
         }
         console.log('Parsed by Tshark.');
         pcapCSVToDatasetJson(outputCSVFilePath, outputJSONFilePath);
-        
-        if(index === 0) {
+
+        if (index === 0) {
             console.log("Sending packets back");
             var datasetFile = fs.readFileSync(outputJSONFilePath);
             let packets = JSON.parse(datasetFile);
@@ -196,8 +207,8 @@ function tsharkCommand(inputFilePath, outputCSVFile) {
 function deleteFile(path) {
     fs.unlink(path, (err) => {
         if (err) {
-          console.error(err)
-          return
+            console.error(err)
+            return
         };
-      })
+    })
 }
