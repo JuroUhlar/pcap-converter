@@ -33,6 +33,20 @@ var io = socketIO(server);
 
 io.on('connection', (socket) => {
     console.log('a user connected');
+    
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+
+    socket.on('file', (data) => {
+        console.log(data);
+        let counter = 1;
+        let interval = setInterval(() => {
+            socket.emit('batch', `Batch ${counter} out of 10`);
+            counter++;
+            if (counter === 11) clearInterval(interval);
+        }, 1000)
+      });
 });
 
 
