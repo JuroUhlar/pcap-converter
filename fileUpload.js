@@ -61,8 +61,8 @@ io.on('connection', (socket) => {
 
             const files = fs.readdirSync(slicedFolder);
             console.log(files);
-            socket.emit('batch', files);
             convertPcapsRecursivelySocket(files, 0, slicedFolder, socket);
+            deleteFile(`./progressive/${pcap.name}`);
         });
     });
 
@@ -277,8 +277,11 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
         console.log("Sending packets back");
         var datasetFile = fs.readFileSync(outputJSONFilePath);
         let packets = JSON.parse(datasetFile);
-        socket.emit('batch', {
-            batch: index,
+        let message = index === 0 ? 'newDataset' : 'batch';
+        let lastBatch = index + 1 === pcaps.length
+        socket.emit(message, {
+            batch: `${index + 1} / ${pcaps.length}`,
+            lastBatch,
             data: {
                 extractedDataset: packets.slice(0, 10000)
             }
