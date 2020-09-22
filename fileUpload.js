@@ -61,6 +61,8 @@ io.on('connection', (socket) => {
 
             const files = fs.readdirSync(slicedFolder);
             console.log(files);
+            socket.emit('batch', files);
+            convertPcapsRecursivelySocket(files, 0, slicedFolder, socket);
         });
     });
 
@@ -199,7 +201,6 @@ app.post('/convert-progressive', async (req, res) => {
     }
 });
 
-
 function convertPcapsRecursively(pcaps, index, folder, res) {
     if (index >= pcaps.length) {
         console.log('All done');
@@ -243,10 +244,51 @@ function convertPcapsRecursively(pcaps, index, folder, res) {
         deleteFile(inputFilePath);
         deleteFile(outputCSVFilePath);
         convertPcapsRecursively(pcaps, index + 1, folder);
-
-
     });
+}
 
+function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
+    if (index >= pcaps.length) {
+        console.log('All done');
+        return;
+    }
+    let pcap = pcaps[index];
+    console.log('\n' + pcap);
+
+    let name = pcap.split('.')[0];
+    let inputFilePath = `${folder}/${pcap}`;
+    let outputCSVFilePath = `${folder}/${name}.csv`;
+    let outputJSONFilePath = `${folder}/${name}.json`;
+    let tshark = tsharkCommand(inputFilePath, outputCSVFilePath);
+    console.log(tshark);
+    exec(tshark, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log('Parsed by Tshark.');
+        pcapCSVToDatasetJson(outputCSVFilePath, outputJSONFilePath);
+
+
+        console.log("Sending packets back");
+        var datasetFile = fs.readFileSync(outputJSONFilePath);
+        let packets = JSON.parse(datasetFile);
+        socket.emit('batch', {
+            batch: index,
+            data: {
+                extractedDataset: packets.slice(0, 10000)
+            }
+        });
+
+
+        deleteFile(inputFilePath);
+        deleteFile(outputCSVFilePath);
+        convertPcapsRecursivelySocket(pcaps, index + 1, folder, socket);
+    });
 }
 
 function tsharkCommand(inputFilePath, outputCSVFile) {
