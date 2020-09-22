@@ -5,8 +5,7 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const compression = require('compression');
 const { exec } = require("child_process");
-const fs = require('fs');
-const fsExtra = require('fs-extra');
+const fs = require('fs-extra');
 const { pcapCSVToDatasetJson } = require('./parse');
 const socketIO = require('socket.io');
 const siofu = require("socketio-file-upload");
@@ -35,19 +34,38 @@ var io = socketIO(server);
 
 io.on('connection', (socket) => {
     console.log('a user connected');
-    
+
     // File uplaoding
     var uploader = new siofu();
-    uploader.dir = "./uploads";
+    uploader.dir = "./progressive";
     uploader.listen(socket);
- 
+
     // Do something when a file is saved:
-    uploader.on("saved", function(event){
+    uploader.on("saved", function (event) {
         console.log("File successfully uplaoded: " + event.file.name);
+
+        let pcap = event.file;
+        let name = pcap.name.split('.')[0];
+        const slicedFolder = `./progressive/${name}`;
+        fs.ensureDirSync(slicedFolder)
+        fs.emptyDirSync(slicedFolder);
+        let sliceCommnad = `editcap -c 10000 ./progressive/${pcap.name} ${slicedFolder}/${pcap.name} `;
+        console.log(sliceCommnad);
+        exec(sliceCommnad, (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return;
+            }
+            if (stderr) console.log(`${stderr}`);
+            if (stdout) console.log(stdout);
+
+            const files = fs.readdirSync(slicedFolder);
+            console.log(files);
+        });
     });
- 
+
     // Error handler:
-    uploader.on("error", function(event){
+    uploader.on("error", function (event) {
         console.log("Error from uploader", event);
     });
 
@@ -55,15 +73,15 @@ io.on('connection', (socket) => {
         console.log('user disconnected');
     });
 
-    socket.on('file', (data) => {
-        console.log(data);
-        let counter = 1;
-        let interval = setInterval(() => {
-            socket.emit('batch', `Batch ${counter} out of 10`);
-            counter++;
-            if (counter === 11) clearInterval(interval);
-        }, 1000)
-    });
+    // socket.on('file', (data) => {
+    //     console.log(data);
+    //     let counter = 1;
+    //     let interval = setInterval(() => {
+    //         socket.emit('batch', `Batch ${counter} out of 10`);
+    //         counter++;
+    //         if (counter === 11) clearInterval(interval);
+    //     }, 1000)
+    // });
 });
 
 
@@ -159,7 +177,7 @@ app.post('/convert-progressive', async (req, res) => {
         if (!fs.existsSync(slicedFolder)) {
             fs.mkdirSync(slicedFolder);
         } else {
-            fsExtra.emptyDirSync(slicedFolder);
+            fs.emptyDirSync(slicedFolder);
         }
         let sliceCommnad = `editcap -c 10000 ./progressive/${name}/${pcap.name} ./progressive/${name}/sliced/${pcap.name} `;
         console.log(sliceCommnad);
