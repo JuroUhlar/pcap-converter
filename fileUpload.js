@@ -9,6 +9,7 @@ const fs = require('fs');
 const fsExtra = require('fs-extra');
 const { pcapCSVToDatasetJson } = require('./parse');
 const socketIO = require('socket.io');
+const siofu = require("socketio-file-upload");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(compression());
+app.use(siofu.router)
 
 //start app 
 const port = process.env.PORT || 5000;
@@ -34,6 +36,21 @@ var io = socketIO(server);
 io.on('connection', (socket) => {
     console.log('a user connected');
     
+    // File uplaoding
+    var uploader = new siofu();
+    uploader.dir = "./uploads";
+    uploader.listen(socket);
+ 
+    // Do something when a file is saved:
+    uploader.on("saved", function(event){
+        console.log("File successfully uplaoded: " + event.file.name);
+    });
+ 
+    // Error handler:
+    uploader.on("error", function(event){
+        console.log("Error from uploader", event);
+    });
+
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });
@@ -46,7 +63,7 @@ io.on('connection', (socket) => {
             counter++;
             if (counter === 11) clearInterval(interval);
         }, 1000)
-      });
+    });
 });
 
 
