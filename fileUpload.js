@@ -41,15 +41,10 @@ app.post('/convert-progressive', async (req, res) => {
             });
             return;
         }
-
         let pcap = req.files.pcap;
         let name = pcap.name.split('.')[0];
         let filePath = `./progressive/${pcap.name}`;
         pcap.mv(filePath);
-
-
-
-
         res.send({
             status: true,
             message: 'File is uploaded',
@@ -74,12 +69,13 @@ io.on('connection', (socket) => {
         const name = data.name;
         const pcapFilePath = data.filePath;
 
-
         const slicedFolder = `./progressive/${name}`;
         fs.ensureDirSync(slicedFolder)
         fs.emptyDirSync(slicedFolder);
+        
         let sliceCommnad = `editcap -c 10000 ${pcapFilePath} ${slicedFolder}/${name + '.pcap'}`;
         console.log(sliceCommnad);
+        
         exec(sliceCommnad, (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
@@ -126,7 +122,6 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
         console.log('Parsed by Tshark.');
         pcapCSVToDatasetJson(outputCSVFilePath, outputJSONFilePath);
 
-
         console.log("Sending packets back");
         var datasetFile = fs.readFileSync(outputJSONFilePath);
         let packets = JSON.parse(datasetFile);
@@ -139,7 +134,6 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
                 extractedDataset: packets.slice(0, 10000)
             }
         });
-
 
         deleteFile(inputFilePath);
         deleteFile(outputCSVFilePath);
