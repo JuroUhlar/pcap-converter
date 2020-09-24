@@ -952,7 +952,7 @@ latest-version@^5.0.0:
   dependencies:
     package-json "^6.3.0"
 
-lodash@^4.17.14, lodash@^4.17.20:
+lodash@^4.17.14:
   version "4.17.20"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
   integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
@@ -1407,11 +1407,6 @@ socket.io@^2.3.0:
     socket.io-adapter "~1.1.0"
     socket.io-client "2.3.0"
     socket.io-parser "~3.4.0"
-
-socketio-file-upload@^0.7.2:
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/socketio-file-upload/-/socketio-file-upload-0.7.2.tgz#1205a4d4c0ba9eb8df544442a920a3fcaaa29ff4"
-  integrity sha512-T6LG2We7GoGlBQed988s3ACoe2ilmILt57clnFO0rc4QOQ2u1gq00XfMPdHZrb0zyRUtd98G2BhDi2DGiPoNvQ==
 
 "statuses@>= 1.5.0 < 2", statuses@~1.5.0:
   version "1.5.0"
