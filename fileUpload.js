@@ -44,6 +44,10 @@ app.post('/convert-progressive', async (req, res) => {
         let pcap = req.files.pcap;
         let name = pcap.name.split('.')[0];
         let filePath = `./progressive/${pcap.name}`;
+        while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
+            name += '_01';
+            filePath = `./progressive/${name}.pcap`;
+        }
         pcap.mv(filePath);
         res.send({
             status: true,
@@ -70,12 +74,10 @@ io.on('connection', (socket) => {
         const pcapFilePath = data.filePath;
 
         const slicedFolder = `./progressive/${name}`;
-        fs.ensureDirSync(slicedFolder)
-        fs.emptyDirSync(slicedFolder);
-        
+        fs.ensureDirSync(slicedFolder);
         let sliceCommnad = `editcap -c 10000 ${pcapFilePath} ${slicedFolder}/${name + '.pcap'}`;
         console.log(sliceCommnad);
-        
+
         exec(sliceCommnad, (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
@@ -98,6 +100,7 @@ io.on('connection', (socket) => {
 
 function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
     if (index >= pcaps.length) {
+        deleteFile(folder);
         console.log('All done');
         return;
     }
@@ -146,7 +149,7 @@ function tsharkCommand(inputFilePath, outputCSVFile) {
 }
 
 function deleteFile(path) {
-    fs.unlink(path, (err) => {
+    fs.remove(path, (err) => {
         if (err) {
             console.error(err)
             return
