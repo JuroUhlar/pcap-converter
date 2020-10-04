@@ -144,5 +144,6 @@ function storeData(data, path) {
 
 
 module.exports = {
-    pcapCSVToDatasetJson 
+    pcapCSVToDatasetJson,
+    storeData,
 };

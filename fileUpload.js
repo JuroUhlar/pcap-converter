@@ -6,7 +6,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const { exec } = require("child_process");
 const fs = require('fs-extra');
-const { pcapCSVToDatasetJson } = require('./parse');
+const { pcapCSVToDatasetJson, storeData } = require('./parse');
 const socketIO = require('socket.io');
 
 const app = express();
@@ -88,7 +88,10 @@ io.on('connection', (socket) => {
 
             const files = fs.readdirSync(slicedFolder);
             console.log(files);
-            convertPcapsRecursivelySocket(files, 0, slicedFolder, socket);
+            
+            var allPackets = []; 
+            
+            convertPcapsRecursivelySocket(files, 0, slicedFolder, socket, allPackets, name);
             deleteFile(pcapFilePath);
         });
     })
@@ -98,10 +101,11 @@ io.on('connection', (socket) => {
     });
 });
 
-function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
+function convertPcapsRecursivelySocket(pcaps, index, folder, socket, allPackets, originalName) {
     if (index >= pcaps.length) {
         deleteFile(folder);
         console.log('All done');
+        storeData(allPackets, `./datasets/${originalName}.json`)
         return;
     }
     let pcap = pcaps[index];
@@ -112,7 +116,7 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
     let outputCSVFilePath = `${folder}/${name}.csv`;
     let outputJSONFilePath = `${folder}/${name}.json`;
     let tshark = tsharkCommand(inputFilePath, outputCSVFilePath);
-    console.log(tshark);
+    // console.log(tshark);
     exec(tshark, (error, stdout, stderr) => {
         if (error) {
             console.log(`error: ${error.message}`);
@@ -128,6 +132,9 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
         console.log("Sending packets back");
         var datasetFile = fs.readFileSync(outputJSONFilePath);
         let packets = JSON.parse(datasetFile);
+
+        allPackets = allPackets.concat(packets);
+
         let message = index === 0 ? 'newDataset' : 'batch';
         let lastBatch = index + 1 === pcaps.length
         socket.emit(message, {
@@ -140,7 +147,7 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket) {
 
         deleteFile(inputFilePath);
         deleteFile(outputCSVFilePath);
-        convertPcapsRecursivelySocket(pcaps, index + 1, folder, socket);
+        convertPcapsRecursivelySocket(pcaps, index + 1, folder, socket, allPackets, originalName);
     });
 }
 

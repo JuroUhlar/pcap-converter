@@ -5,8 +5,8 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./index.js",
-    "dev-start": "nodemon ./index.js",
+    "start": "node ./fileUpload.js",
+    "dev-start": "nodemon ./fileUpload.js",
     "deploy": "gcloud app deploy"
   },
   "repository": {
