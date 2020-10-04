@@ -39,6 +39,11 @@ app.get('/list-saved', (req, res) => {
     res.send(files);
 })
 
+app.get('/convert-pcap-from-url', (req, res) => {
+    console.log(req.params);
+    res.send(req.query.url);
+}) 
+
 
 // Upload pcap file
 app.post('/convert-progressive', async (req, res) => {
