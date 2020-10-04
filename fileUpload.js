@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(compression());
+app.use(express.static('public'))
 
 //start app 
 const port = process.env.PORT || 5000;
@@ -28,8 +29,16 @@ var server = app.listen(port, () =>
 
 // Hello world
 app.get('/', (req, res) => {
-    res.send('Hello World! The pcap converter should be running')
+    res.send('The pcap converter server is running.')
 })
+
+app.get('/list-saved', (req, res) => {
+    let files = fs.readdirSync('./public/datasets');
+    files = files.filter(file => file !== '.gitignore');
+    console.log(files);
+    res.send(files);
+})
+
 
 // Upload pcap file
 app.post('/convert-progressive', async (req, res) => {
@@ -105,9 +114,10 @@ function convertPcapsRecursivelySocket(pcaps, index, folder, socket, allPackets,
     if (index >= pcaps.length) {
         deleteFile(folder);
         console.log('All done');
-        storeData(allPackets, `./datasets/${originalName}.json`)
+        storeData(allPackets, `./public/datasets/${originalName}.json`)
         return;
     }
+
     let pcap = pcaps[index];
     console.log('\n' + pcap);
 
