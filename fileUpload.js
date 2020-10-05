@@ -8,6 +8,7 @@ const { exec } = require("child_process");
 const fs = require('fs-extra');
 const { pcapCSVToDatasetJson, storeData } = require('./parse');
 const socketIO = require('socket.io');
+const { downloadFile, getFileNameFromURL } = require("./downloadFile");
 
 const app = express();
 
@@ -39,10 +40,17 @@ app.get('/list-saved', (req, res) => {
     res.send(files);
 })
 
-app.get('/convert-pcap-from-url', (req, res) => {
-    console.log(req.params);
-    res.send(req.query.url);
-}) 
+app.get('/get-pcap-from-url', (req, res) => {
+    let url = req.query.url;
+    let fileName = getFileNameFromURL(url);
+    let destinationPath = `./progressive/${fileName}.pcap`;
+    console.log(`\n Downloading file from ${url}`);
+    downloadFile(url, destinationPath)
+        .then(() => {
+            console.log('File downloaded to ', destinationPath)
+            res.send(destinationPath);
+        });
+})
 
 
 // Upload pcap file
@@ -102,9 +110,9 @@ io.on('connection', (socket) => {
 
             const files = fs.readdirSync(slicedFolder);
             console.log(files);
-            
-            var allPackets = []; 
-            
+
+            var allPackets = [];
+
             convertPcapsRecursivelySocket(files, 0, slicedFolder, socket, allPackets, name);
             deleteFile(pcapFilePath);
         });
