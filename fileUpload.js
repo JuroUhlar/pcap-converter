@@ -54,7 +54,7 @@ app.get('/get-pcap-from-url', (req, res) => {
 
 
 // Upload pcap file
-app.post('/convert-progressive', async (req, res) => {
+app.post('/upload-pcap', async (req, res) => {
     try {
         if (!req.files) {
             res.send({
