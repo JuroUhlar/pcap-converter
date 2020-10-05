@@ -121,7 +121,20 @@ io.on('connection', (socket) => {
 
     socket.on('submitPcapUrl', (data) => {
         const url = data.url;
-        console.log('Download file from', url);
+        console.log(url);
+        let onSuccess = (filePath) => {
+            console.log('File downloaded to ', filePath);
+            socket.emit('filePath', filePath);
+        };
+        let onError = (err) => {
+            // console.log(err);
+            socket.emit('error', err);
+        }
+        try {
+            downloadPcap(url, onSuccess, onError);
+        } catch (err) {
+            onError(err);
+        } 
     })
 
     socket.on('disconnect', () => {

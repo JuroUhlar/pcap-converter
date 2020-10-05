@@ -13,6 +13,7 @@ async function downloadFile(fileUrl, outputLocationPath) {
       console.log('download progress:', progress);
     }
   }).then(response => {
+    console.log(response.status);
     const totalLength = response.headers['content-length'];
     console.log(totalLength);
 
