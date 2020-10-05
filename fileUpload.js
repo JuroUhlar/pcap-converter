@@ -22,13 +22,13 @@ app.use(morgan('dev'));
 app.use(compression());
 app.use(express.static('public'))
 
-//start app 
 const port = process.env.PORT || 5000;
+
+//start app 
 var server = app.listen(port, () =>
     console.log(`App is listening on port ${port}.`)
 );
 
-// Hello world
 app.get('/', (req, res) => {
     res.send('The pcap converter server is running.')
 })
@@ -41,19 +41,28 @@ app.get('/list-saved', (req, res) => {
 })
 
 app.get('/get-pcap-from-url', (req, res) => {
-    let url = req.query.url;
-    let name = getFileNameFromURL(url);
-    let filePath = `./progressive/${name}.pcap`;
-    while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
-        name += '_01';
-        filePath = `./progressive/${name}.pcap`;
+    try {
+        let url = req.query.url;
+        let name = getFileNameFromURL(url);
+        let filePath = `./progressive/${name}.pcap`;
+        while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
+            name += '_01';
+            filePath = `./progressive/${name}.pcap`;
+        }
+        console.log(`\n Downloading file from ${url}`);
+        downloadFile(url, filePath)
+            .then(() => {
+                console.log('File downloaded to ', filePath)
+                res.send(filePath);
+            })
+            .catch(err => {
+                console.log(err)
+                res.status(500).send(err);
+            });
+    } catch (err) {
+        console.log(err)
+        res.status(500).send('Internal server error: ', err);
     }
-    console.log(`\n Downloading file from ${url}`);
-    downloadFile(url, filePath)
-        .then(() => {
-            console.log('File downloaded to ', filePath)
-            res.send(filePath);
-        });
 })
 
 
@@ -120,6 +129,11 @@ io.on('connection', (socket) => {
             convertPcapsRecursivelySocket(files, 0, slicedFolder, socket, allPackets, name);
             deleteFile(pcapFilePath);
         });
+    });
+
+    socket.on('submitPcapUrl', (data) => {
+        const url = data.url;
+        console.log('Download file from', url);
     })
 
     socket.on('disconnect', () => {
