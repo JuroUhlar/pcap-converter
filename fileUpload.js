@@ -41,28 +41,16 @@ app.get('/list-saved', (req, res) => {
 })
 
 app.get('/get-pcap-from-url', (req, res) => {
-    try {
-        let url = req.query.url;
-        let name = getFileNameFromURL(url);
-        let filePath = `./progressive/${name}.pcap`;
-        while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
-            name += '_01';
-            filePath = `./progressive/${name}.pcap`;
-        }
-        console.log(`\n Downloading file from ${url}`);
-        downloadFile(url, filePath)
-            .then(() => {
-                console.log('File downloaded to ', filePath)
-                res.send(filePath);
-            })
-            .catch(err => {
-                console.log(err)
-                res.status(500).send(err);
-            });
-    } catch (err) {
-        console.log(err)
-        res.status(500).send('Internal server error: ', err);
+    let url = req.query.url;
+    let onSuccess = (filePath) => {
+        console.log('File downloaded to ', filePath);
+        res.send(filePath);
+    };
+    let onError = (err) => {
+        console.log(err);
+        res.status(500).send(err);
     }
+    downloadPcap(url, onSuccess, onError);
 })
 
 
@@ -140,6 +128,27 @@ io.on('connection', (socket) => {
         console.log('user disconnected');
     });
 });
+
+function downloadPcap(url, successHandler, errorHandler) {
+    try {
+        let name = getFileNameFromURL(url);
+        let filePath = `./progressive/${name}.pcap`;
+        while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
+            name += '_01';
+            filePath = `./progressive/${name}.pcap`;
+        }
+        console.log(`\n Downloading file from ${url}`);
+        downloadFile(url, filePath)
+            .then(() => {
+                successHandler(filePath)
+            })
+            .catch(err => {
+                errorHandler(err);
+            });
+    } catch (err) {
+        errorHandler(err);
+    }
+}
 
 function convertPcapsRecursivelySocket(pcaps, index, folder, socket, allPackets, originalName) {
     if (index >= pcaps.length) {
