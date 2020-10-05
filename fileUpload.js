@@ -42,13 +42,17 @@ app.get('/list-saved', (req, res) => {
 
 app.get('/get-pcap-from-url', (req, res) => {
     let url = req.query.url;
-    let fileName = getFileNameFromURL(url);
-    let destinationPath = `./progressive/${fileName}.pcap`;
+    let name = getFileNameFromURL(url);
+    let filePath = `./progressive/${name}.pcap`;
+    while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
+        name += '_01';
+        filePath = `./progressive/${name}.pcap`;
+    }
     console.log(`\n Downloading file from ${url}`);
-    downloadFile(url, destinationPath)
+    downloadFile(url, filePath)
         .then(() => {
-            console.log('File downloaded to ', destinationPath)
-            res.send(destinationPath);
+            console.log('File downloaded to ', filePath)
+            res.send(filePath);
         });
 })
 
