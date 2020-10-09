@@ -126,15 +126,16 @@ io.on('connection', (socket) => {
             console.log('File downloaded to ', filePath);
             socket.emit('filePath', filePath);
         };
-        let onError = (err) => {
-            // console.log(err);
-            socket.emit('error', err);
+        let onError = () => {
+            console.log('Error dowloading file');
+            socket.emit('downloadError', 'error dowloading file');
         }
         try {
             downloadPcap(url, onSuccess, onError);
         } catch (err) {
-            onError(err);
-        } 
+            console.log("Error in socket method", err);
+            onError();
+        }
     })
 
     socket.on('disconnect', () => {
@@ -143,24 +144,20 @@ io.on('connection', (socket) => {
 });
 
 function downloadPcap(url, successHandler, errorHandler) {
-    try {
-        let name = getFileNameFromURL(url);
-        let filePath = `./progressive/${name}.pcap`;
-        while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
-            name += '_01';
-            filePath = `./progressive/${name}.pcap`;
-        }
-        console.log(`\n Downloading file from ${url}`);
-        downloadFile(url, filePath)
-            .then(() => {
-                successHandler(filePath)
-            })
-            .catch(err => {
-                errorHandler(err);
-            });
-    } catch (err) {
-        errorHandler(err);
+    let name = getFileNameFromURL(url);
+    let filePath = `./progressive/${name}.pcap`;
+    while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
+        name += '_01';
+        filePath = `./progressive/${name}.pcap`;
     }
+    console.log(`\n Downloading file from ${url}`);
+    downloadFile(url, filePath)
+        .then(() => {
+            successHandler(filePath);
+        })
+        .catch(() => {
+            errorHandler();
+        });
 }
 
 function convertPcapsRecursivelySocket(pcaps, index, folder, socket, allPackets, originalName) {

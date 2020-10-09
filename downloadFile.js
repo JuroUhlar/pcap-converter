@@ -1,20 +1,16 @@
 const fs = require('fs-extra');
 const Axios = require('axios');
-const ProgressBar = require('progress')
+const ProgressBar = require('progress');
+const { response } = require('express');
 
 async function downloadFile(fileUrl, outputLocationPath) {
-  const writer = fs.createWriteStream(outputLocationPath);
-
   return Axios({
     method: 'get',
     url: fileUrl,
     responseType: 'stream',
-    onDownloadProgress(progress) {
-      console.log('download progress:', progress);
-    }
   }).then(response => {
-    console.log(response.status);
     const totalLength = response.headers['content-length'];
+    console.log(response.status);
     console.log(totalLength);
 
     const progressBar = new ProgressBar('-> downloading [:bar] :percent :etas', {
@@ -24,13 +20,12 @@ async function downloadFile(fileUrl, outputLocationPath) {
       renderThrottle: 1,
       total: parseInt(totalLength)
     })
-
-    response.data.on('data', (chunk) => progressBar.tick(chunk.length))
-
+    response.data.on('data', (chunk) => progressBar.tick(chunk.length));
+    
     //ensure that the user can call `then()` only when the file has
     //been downloaded entirely.
-
     return new Promise((resolve, reject) => {
+      const writer = fs.createWriteStream(outputLocationPath);
       response.data.pipe(writer);
       let error = null;
       writer.on('error', err => {
@@ -45,7 +40,12 @@ async function downloadFile(fileUrl, outputLocationPath) {
         //no need to call the reject here, as it will have been called in the
         //'error' stream;
       });
+
     });
+  })
+  .catch((e) => {
+    console.log(e.response.status, e.response.statusText);
+    return Promise.reject();
   });
 }
 
