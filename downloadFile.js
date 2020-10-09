@@ -2,13 +2,14 @@ const fs = require('fs-extra');
 const Axios = require('axios');
 const ProgressBar = require('progress');
 
-async function downloadFile(fileUrl, outputLocationPath) {
+async function downloadFile(fileUrl, outputLocationPath, progressHandler) {
   return Axios({
     method: 'get',
     url: fileUrl,
     responseType: 'stream',
   }).then(response => {
     const totalLength = response.headers['content-length'];
+    let bytesDownloaded = 0;
     console.log(`Response status: ${response.status}, size: ${totalLength}`);
 
     const progressBar = new ProgressBar('-> downloading [:bar] :percent :etas', {
@@ -18,7 +19,12 @@ async function downloadFile(fileUrl, outputLocationPath) {
       renderThrottle: 1,
       total: parseInt(totalLength)
     })
-    response.data.on('data', (chunk) => progressBar.tick(chunk.length));
+    response.data.on('data', (chunk) => {
+      progressBar.tick(chunk.length);
+      bytesDownloaded += chunk.length;
+      let percentDone = (bytesDownloaded / totalLength * 100 | 0);
+      progressHandler(percentDone);
+    })
     
     //ensure that the user can call `then()` only when the file has
     //been downloaded entirely.

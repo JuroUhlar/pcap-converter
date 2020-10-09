@@ -125,10 +125,13 @@ io.on('connection', (socket) => {
             console.log('File downloaded to ', filePath);
             socket.emit('filePath', filePath);
         };
+        let onProgess = (percentage) => {
+            socket.emit('downloadProgress', percentage);
+        }
         let onError = (err) => {
             socket.emit('downloadError', 'Error dowloading file: ' + err);
         }
-        downloadPcap(url, onSuccess, onError);
+        downloadPcap(url, onSuccess, onError, onProgess);
     })
 
     socket.on('disconnect', () => {
@@ -136,7 +139,7 @@ io.on('connection', (socket) => {
     });
 });
 
-function downloadPcap(url, successHandler, errorHandler) {
+function downloadPcap(url, successHandler, errorHandler, progressHandler) {
     let name = getFileNameFromURL(url);
     let filePath = `./progressive/${name}.pcap`;
     while (fs.existsSync(filePath) || fs.existsSync(`./progressive/${name}`)) {
@@ -144,7 +147,7 @@ function downloadPcap(url, successHandler, errorHandler) {
         filePath = `./progressive/${name}.pcap`;
     }
     console.log(`Downloading file from ${url}`);
-    downloadFile(url, filePath)
+    downloadFile(url, filePath, progressHandler)
         .then(() => {
             successHandler(filePath);
         })
