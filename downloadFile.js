@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const Axios = require('axios');
 const ProgressBar = require('progress');
-const { response } = require('express');
 
 async function downloadFile(fileUrl, outputLocationPath) {
   return Axios({
@@ -10,8 +9,7 @@ async function downloadFile(fileUrl, outputLocationPath) {
     responseType: 'stream',
   }).then(response => {
     const totalLength = response.headers['content-length'];
-    console.log(response.status);
-    console.log(totalLength);
+    console.log(`Response status: ${response.status}, size: ${totalLength}`);
 
     const progressBar = new ProgressBar('-> downloading [:bar] :percent :etas', {
       width: 40,
@@ -44,8 +42,9 @@ async function downloadFile(fileUrl, outputLocationPath) {
     });
   })
   .catch((e) => {
-    console.log(e.response.status, e.response.statusText);
-    return Promise.reject();
+    let errorMessage = `${e.response.status}: ${e.response.statusText}`;
+    console.log(errorMessage);
+    return Promise.reject(errorMessage);
   });
 }
 

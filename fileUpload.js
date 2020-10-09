@@ -40,18 +40,18 @@ app.get('/list-saved', (req, res) => {
     res.send(files);
 })
 
-app.get('/get-pcap-from-url', (req, res) => {
-    let url = req.query.url;
-    let onSuccess = (filePath) => {
-        console.log('File downloaded to ', filePath);
-        res.send(filePath);
-    };
-    let onError = (err) => {
-        console.log(err);
-        res.status(500).send(err);
-    }
-    downloadPcap(url, onSuccess, onError);
-})
+// app.get('/get-pcap-from-url', (req, res) => {
+//     let url = req.query.url;
+//     let onSuccess = (filePath) => {
+//         console.log('File downloaded to ', filePath);
+//         res.send(filePath);
+//     };
+//     let onError = (err) => {
+//         console.log(err);
+//         res.status(500).send(err);
+//     }
+//     downloadPcap(url, onSuccess, onError);
+// })
 
 
 // Upload pcap file
@@ -89,7 +89,7 @@ app.post('/upload-pcap', async (req, res) => {
 var io = socketIO(server);
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    console.log('\nUser connected');
 
     socket.on('requestDataset', (data) => {
         console.log(data);
@@ -121,21 +121,14 @@ io.on('connection', (socket) => {
 
     socket.on('submitPcapUrl', (data) => {
         const url = data.url;
-        console.log(url);
         let onSuccess = (filePath) => {
             console.log('File downloaded to ', filePath);
             socket.emit('filePath', filePath);
         };
-        let onError = () => {
-            console.log('Error dowloading file');
-            socket.emit('downloadError', 'error dowloading file');
+        let onError = (err) => {
+            socket.emit('downloadError', 'Error dowloading file: ' + err);
         }
-        try {
-            downloadPcap(url, onSuccess, onError);
-        } catch (err) {
-            console.log("Error in socket method", err);
-            onError();
-        }
+        downloadPcap(url, onSuccess, onError);
     })
 
     socket.on('disconnect', () => {
@@ -150,13 +143,13 @@ function downloadPcap(url, successHandler, errorHandler) {
         name += '_01';
         filePath = `./progressive/${name}.pcap`;
     }
-    console.log(`\n Downloading file from ${url}`);
+    console.log(`Downloading file from ${url}`);
     downloadFile(url, filePath)
         .then(() => {
             successHandler(filePath);
         })
-        .catch(() => {
-            errorHandler();
+        .catch((err) => {
+            errorHandler(err);
         });
 }
 
