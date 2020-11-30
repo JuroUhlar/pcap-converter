@@ -40,20 +40,6 @@ app.get('/list-saved', (req, res) => {
     res.send(files);
 })
 
-// app.get('/get-pcap-from-url', (req, res) => {
-//     let url = req.query.url;
-//     let onSuccess = (filePath) => {
-//         console.log('File downloaded to ', filePath);
-//         res.send(filePath);
-//     };
-//     let onError = (err) => {
-//         console.log(err);
-//         res.status(500).send(err);
-//     }
-//     downloadPcap(url, onSuccess, onError);
-// })
-
-
 // Upload pcap file
 app.post('/upload-pcap', async (req, res) => {
     try {
